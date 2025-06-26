@@ -8,7 +8,7 @@ load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-WEBHOOK_URL    = os.getenv("WEBHOOK_URL")  # пример: https://your-app.onrender.com/<TOKEN>
+WEBHOOK_URL    = os.getenv("WEBHOOK_URL")
 
 if not all([TELEGRAM_TOKEN, GEMINI_API_KEY, WEBHOOK_URL]):
     raise ValueError("Не заданы все необходимые переменные окружения.")
@@ -23,24 +23,17 @@ model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
 app = Flask(__name__)
 
 KEYWORDS_TO_IGNORE = [
-    # Русские
     "продается", "в наличии", "можно забрать", "за сколько", "цена",
     "стоимость", "купить", "продам", "наличие", "где находится",
     "доставка", "алмере", "ещё есть", "доступен", "можно купить",
     "продаю", "объявление", "торг", "самовывоз", "отдам", "забрать",
     "актуально", "ещё актуально", "есть ли", "осталось", "новый", "б/у", "бушный", "бэушный",
-
-    # Украинские
     "продається", "в наявності", "можна забрати", "скільки коштує",
     "ціна", "вартість", "купити", "продам", "наявність", "де знаходиться",
     "доставка", "алмера", "ще є", "доступний", "можна купити",
     "віддам", "оголошення", "є в наявності", "актуально", "самовивіз", "новий", "б/у", "бушне",
-
-    # Английские
     "for sale", "price", "available", "can pick up", "delivery",
     "location", "how much", "still available", "buy", "sell", "selling", "giveaway",
-
-    # Дополнительные фразы
     "отдаю даром", "цена вопроса", "кто заберёт", "можно ли купить", "остался ли", 
     "актуально ли", "кому нужно", "ещё продаётся", "по чём", "по какой цене", 
     "куда забирать", "наличие товара", "ещё можно взять", "продажа"
@@ -69,8 +62,20 @@ def handle_message(message):
         response = model.generate_content(prompt)
         reply = response.text.strip()
 
-        if len(reply) > 300:
-            reply = reply[:297] + "..."
+        MAX_LIMIT = 300
+        HARD_LIMIT = 350
+
+        if len(reply) > MAX_LIMIT:
+            cut = reply[:HARD_LIMIT]
+            end = max(cut.rfind("."), cut.rfind("!"), cut.rfind("?"))
+
+            if end != -1 and end >= MAX_LIMIT:
+                reply = cut[:end + 1].strip()
+            else:
+                reply = reply[:MAX_LIMIT].strip()
+                # Если обрезано без завершения — ставим многоточие
+                if not reply.endswith((".", "!", "?")):
+                    reply += "..."
 
         bot.reply_to(message, reply)
 
