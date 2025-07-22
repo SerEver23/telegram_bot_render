@@ -82,8 +82,9 @@ def handle_message(message):
 
 def start_webhook():
     bot.remove_webhook()
-    bot.set_webhook(f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
-    print(f"Webhook установлен по адресу: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+    webhook_url = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+    bot.set_webhook(webhook_url)
+    print(f"Webhook установлен по адресу: {webhook_url}")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
 
 if __name__ == "__main__":
