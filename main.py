@@ -22,7 +22,7 @@ MUST_ANSWER_KEYWORDS = [
     "tell me", "looking for", "how", "who knows", "who does", "who handles", "can you tell me", "who can", "knows", "Please advise", "who", "help", "service station"
 ]
 
-@app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
+@app.route(f"/{7876262231:AAH1J7Tci9CrI5IizkrT8PUvnMI74jJ3Vzo7876262231:AAH1J7Tci9CrI5IizkrT8PUvnMI74jJ3Vzo}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
