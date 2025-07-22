@@ -1,28 +1,24 @@
 import os
 import telebot
+import requests
 from flask import Flask, request
 from dotenv import load_dotenv
 
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-WEBHOOK_URL    = os.getenv("WEBHOOK_URL")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
 
-if not all([TELEGRAM_TOKEN, WEBHOOK_URL]):
+if not all([TELEGRAM_TOKEN, WEBHOOK_URL, SPOONACULAR_API_KEY]):
     raise ValueError("Не заданы все необходимые переменные окружения.")
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-
-# Flask app
 app = Flask(__name__)
 
-# Ключевые слова, которые требуют обязательного ответа
 MUST_ANSWER_KEYWORDS = [
-    # Русский
     "скажите", "ищу", "как", "кто знает", "кто занимается", "подскажите", "кто может", "знает", "посоветуйте", "кто", "помогите", "сто",
-    # Украинский
     "скажіть", "шукаю", "як", "хто знає", "хто займається", "підкажіть", "підказати", "хто може", "знає", "Порадьте", "хто", "допоможіть", "сто",
-    # Английский
     "tell me", "looking for", "how", "who knows", "who does", "who handles", "can you tell me", "who can", "knows", "Please advise", "who", "help", "service station"
 ]
 
@@ -37,10 +33,8 @@ def handle_message(message):
     text = message.text.strip()
     lower_text = text.lower()
 
-    # 💡 Проверка ключевых слов для обязательного ответа
     must_answer = any(keyword in lower_text for keyword in MUST_ANSWER_KEYWORDS)
 
-    # 🚫 Если не must_answer — применяем эвристику против рекламы
     if not must_answer:
         if len(text) > 700:
             return
@@ -51,14 +45,28 @@ def handle_message(message):
 
     bot.send_chat_action(message.chat.id, 'typing')
 
-    prompt = (
-        f"Ты — эксперт по жизни в Нидерландах и помогаешь людям в групповых чатах.\n"
-        f"Вот сообщение:\n\"{text}\"\n\n"
-        f"Если это обычное объявление, реклама, мероприятие или просто информация — не отвечай.\n"
-        f"Если это вопрос, потенциально интересный многим в чате, или запрос совета — ответь развернуто, но лаконично (до 400–450 символов, без лишней воды).\n"
-        f"Если не уверен — лучше не отвечай."
-    )
+    # 🔍 Попытка получить рецепт из Spoonacular
+    try:
+        search_url = f"https://api.spoonacular.com/recipes/complexSearch"
+        params = {
+            "query": text,
+            "number": 1,
+            "apiKey": SPOONACULAR_API_KEY
+        }
+        res = requests.get(search_url, params=params)
+        data = res.json()
 
+        if data.get("results"):
+            recipe = data["results"][0]
+            title = recipe.get("title")
+            link = f"https://spoonacular.com/recipes/{'-'.join(title.lower().split())}-{recipe.get('id')}"
+            bot.reply_to(message, f"🍽 Нашёл рецепт: *{title}*\n[Открыть]({link})", parse_mode="Markdown")
+        else:
+            bot.reply_to(message, "🥣 Рецептов не найдено. Попробуй задать другой вопрос.")
+
+    except Exception as e:
+        print("Ошибка Spoonacular:", e)
+        bot.reply_to(message, "⚠️ Ошибка при запросе к Spoonacular API.")
 
 def start_webhook():
     bot.remove_webhook()
