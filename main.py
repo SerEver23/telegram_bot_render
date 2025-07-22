@@ -27,6 +27,7 @@ def home():
     
 @app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
+    print("🔔 Webhook получил обновление!")
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
     return "OK", 200
