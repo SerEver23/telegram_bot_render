@@ -28,6 +28,35 @@ def webhook():
     bot.process_new_updates([update])
     return "OK", 200
 
+@bot.message_handler(commands=['recipe', 'рецепт'])
+def send_recipe(message):
+    query = message.text.replace('/recipe', '').replace('/рецепт', '').strip()
+    if not query:
+        bot.reply_to(message, "🍽 Введите запрос, например: `/recipe pasta`")
+        return
+
+    url = f"https://api.spoonacular.com/recipes/complexSearch"
+    params = {
+        "query": query,
+        "number": 1,
+        "apiKey": SPOONACULAR_API_KEY
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data.get("results"):
+            recipe = data["results"][0]
+            title = recipe["title"]
+            link = f"https://spoonacular.com/recipes/{title.replace(' ', '-')}-{recipe['id']}"
+            bot.reply_to(message, f"🥗 {title}\n🔗 {link}")
+        else:
+            bot.reply_to(message, "🙁 Рецепты не найдены.")
+    except Exception as e:
+        print("Ошибка Spoonacular:", e)
+        bot.reply_to(message, "⚠️ Ошибка при поиске рецепта.")
+
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def handle_message(message):
     text = message.text.strip()
@@ -45,28 +74,11 @@ def handle_message(message):
 
     bot.send_chat_action(message.chat.id, 'typing')
 
-    # 🔍 Попытка получить рецепт из Spoonacular
     try:
-        search_url = f"https://api.spoonacular.com/recipes/complexSearch"
-        params = {
-            "query": text,
-            "number": 1,
-            "apiKey": SPOONACULAR_API_KEY
-        }
-        res = requests.get(search_url, params=params)
-        data = res.json()
-
-        if data.get("results"):
-            recipe = data["results"][0]
-            title = recipe.get("title")
-            link = f"https://spoonacular.com/recipes/{'-'.join(title.lower().split())}-{recipe.get('id')}"
-            bot.reply_to(message, f"🍽 Нашёл рецепт: *{title}*\n[Открыть]({link})", parse_mode="Markdown")
-        else:
-            bot.reply_to(message, "🥣 Рецептов не найдено. Попробуй задать другой вопрос.")
-
+        # Можно подключить ИИ или ответ по шаблону здесь
+        bot.reply_to(message, "🤖 Напишите `/recipe борщ`, чтобы получить рецепт.")
     except Exception as e:
-        print("Ошибка Spoonacular:", e)
-        bot.reply_to(message, "⚠️ Ошибка при запросе к Spoonacular API.")
+        print("Ошибка обработки сообщения:", e)
 
 def start_webhook():
     bot.remove_webhook()
@@ -75,31 +87,4 @@ def start_webhook():
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
 
 if __name__ == "__main__":
-    import requests
-
-@bot.message_handler(commands=['recipe', 'рецепт'])
-def send_recipe(message):
-    query = message.text.replace('/recipe', '').replace('/рецепт', '').strip()
-    if not query:
-        bot.reply_to(message, "🍽 Введите запрос, например: `/recipe pasta`")
-        return
-
-    api_key = os.getenv("SPOONACULAR_API_KEY")
-    url = f"https://api.spoonacular.com/recipes/complexSearch?query={query}&number=1&apiKey={api_key}"
-
-    try:
-        response = requests.get(url)
-        data = response.json()
-
-        if data.get("results"):
-            recipe = data["results"][0]
-            title = recipe["title"]
-            link = f"https://spoonacular.com/recipes/{title.replace(' ', '-')}-{recipe['id']}"
-            bot.reply_to(message, f"🥗 {title}\n🔗 {link}")
-        else:
-            bot.reply_to(message, "🙁 Рецепты не найдены.")
-
-    except Exception as e:
-        print("Ошибка Spoonacular:", e)
-        bot.reply_to(message, "⚠️ Ошибка при поиске рецепта.")
     start_webhook()
