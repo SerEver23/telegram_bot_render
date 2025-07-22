@@ -21,7 +21,10 @@ MUST_ANSWER_KEYWORDS = [
     "скажіть", "шукаю", "як", "хто знає", "хто займається", "підкажіть", "підказати", "хто може", "знає", "Порадьте", "хто", "допоможіть", "сто",
     "tell me", "looking for", "how", "who knows", "who does", "who handles", "can you tell me", "who can", "knows", "Please advise", "who", "help", "service station"
 ]
-
+@app.route("/", methods=["GET"])
+def home():
+    return "🤖 Telegram bot is alive!"
+    
 @app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
