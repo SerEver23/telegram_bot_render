@@ -22,7 +22,7 @@ MUST_ANSWER_KEYWORDS = [
     "tell me", "looking for", "how", "who knows", "who does", "who handles", "can you tell me", "who can", "knows", "Please advise", "who", "help", "service station"
 ]
 
-@app.route(f"/{7876262231:AAH1J7Tci9CrI5IizkrT8PUvnMI74jJ3Vzo7876262231:AAH1J7Tci9CrI5IizkrT8PUvnMI74jJ3Vzo}", methods=["POST"])
+@app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
@@ -82,7 +82,7 @@ def handle_message(message):
 
 def start_webhook():
     bot.remove_webhook()
-    webhook_url = "https://telegram-recipe-bot-o1dc.onrender.com/7876262231:AAH1J7Tci9CrI5IizkrT8PUvnMI74jJ3Vzo"
+    webhook_url = f"{WEBHOOK_URL=https://telegram-recipe-bot-o1dc.onrender.com}/{TELEGRAM_TOKEN=7876262231:AAH1J7Tci9CrI5IizkrT8PUvnMI74jJ3Vzo}"
     bot.set_webhook(webhook_url)
     print(f"Webhook установлен по адресу: {webhook_url}")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
