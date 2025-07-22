@@ -59,15 +59,6 @@ def handle_message(message):
         f"Если не уверен — лучше не отвечай."
     )
 
-    try:
-        response = model.generate_content(prompt)
-        reply = response.text.strip()
-        if reply:
-            bot.reply_to(message, reply)
-
-    except Exception as e:
-        print("Ошибка Gemini:", e)
-        bot.reply_to(message, "⚠️ Помилка при зверненні до Gemini API.")
 
 def start_webhook():
     bot.remove_webhook()
