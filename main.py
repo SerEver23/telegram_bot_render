@@ -1,23 +1,17 @@
 import os
 import telebot
-import google.generativeai as genai
 from flask import Flask, request
 from dotenv import load_dotenv
 
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 WEBHOOK_URL    = os.getenv("WEBHOOK_URL")
 
-if not all([TELEGRAM_TOKEN, GEMINI_API_KEY, WEBHOOK_URL]):
+if not all([TELEGRAM_TOKEN, WEBHOOK_URL]):
     raise ValueError("Не заданы все необходимые переменные окружения.")
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-
-# Настройка Gemini
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
 
 # Flask app
 app = Flask(__name__)
